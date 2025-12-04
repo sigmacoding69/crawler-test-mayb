@@ -1,0 +1,36 @@
+{
+  "crawl_date": "2025-12-04T20:25:06.522858",
+  "total_products": 6,
+  "products": [
+    {
+      "store": "Woolworths",
+      "item_name": "Special",
+      "price": "$1.95"
+    },
+    {
+      "store": "Woolworths",
+      "item_name": "Special",
+      "price": "$2.15"
+    },
+    {
+      "store": "Pak'nSave",
+      "item_name": "Rise N Shine Size 7 12 Pack Colony Eggs12pk",
+      "price": "7"
+    },
+    {
+      "store": "Pak'nSave",
+      "item_name": "Farmer Brown Fresh Colony Size 6 Eggs18pk",
+      "price": "6"
+    },
+    {
+      "store": "Pak'nSave",
+      "item_name": "Farmer Brown Fresh Colony Size 6 Eggs12pk",
+      "price": "6"
+    },
+    {
+      "store": "Pak'nSave",
+      "item_name": "Farmer Brown Cage-Free Barn Size 7 Eggs12pk",
+      "price": "7"
+    }
+  ]
+}

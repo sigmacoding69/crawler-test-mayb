@@ -58,78 +58,147 @@ class EggCrawler:
         driver = webdriver.Chrome(service=service, options=chrome_options)
         return driver
     
-    def extract_product_data(self, product_element: BeautifulSoup, store_name: str) -> Optional[Dict[str, str]]:
+    def extract_woolworths_product(self, product_element: BeautifulSoup) -> Optional[Dict[str, str]]:
         """
-        Extract product name and price from a product element.
+        Extract product name and price from a Woolworths product element.
         
         Args:
             product_element: BeautifulSoup element containing product information
-            store_name: Name of the store for the result
         
         Returns:
             Optional[Dict[str, str]]: Dictionary with store, item_name, and price, or None if invalid
         """
         try:
-            # Extract product name - try multiple strategies
+            # Extract product name - Woolworths specific selectors
             name = None
-            name_selectors = [
-                (['h1', 'h2', 'h3', 'h4'], lambda x: x and ('title' in x.lower() or 'name' in x.lower())),
-                (['a'], lambda x: x and ('title' in x.lower() or 'name' in x.lower())),
-                (['h1', 'h2', 'h3', 'h4', 'a'], None),
-                (['span', 'div'], lambda x: x and ('title' in x.lower() or 'name' in x.lower())),
-            ]
+            name_elem = (
+                product_element.find(['h2', 'h3', 'h4', 'a'], class_=lambda x: x and ('title' in x.lower() or 'name' in x.lower() or 'heading' in x.lower())) or
+                product_element.find(['a'], href=True) or
+                product_element.find(['h2', 'h3', 'h4'])
+            )
             
-            for tags, class_filter in name_selectors:
-                name_elem = product_element.find(tags, class_=class_filter) if class_filter else product_element.find(tags)
-                if name_elem:
-                    name = name_elem.get_text(strip=True)
-                    if name and len(name) > 3:
+            if name_elem:
+                name = name_elem.get_text(strip=True)
+            
+            # If name is too short or generic, try to find text with "egg" in it
+            if not name or len(name) < 5 or name.lower() in ['special', 'sale', 'new']:
+                # Look for any text containing "egg"
+                all_text = product_element.get_text()
+                lines = [line.strip() for line in all_text.split('\n') if line.strip()]
+                for line in lines:
+                    if 'egg' in line.lower() and len(line) > 10:
+                        name = line
                         break
             
-            if not name or len(name) < 3:
+            if not name or len(name) < 5:
                 return None
             
-            # Extract price - try multiple strategies
+            # Clean up name - remove price information and extra text
+            # Remove patterns like "$X.XX / 1ea", "Was $X.XX", "Save $X.XX", etc.
+            name = re.sub(r'\$[\d,]+\.?\d{2}\s*/.*?$', '', name)  # Remove "$X.XX / 1ea" at end
+            name = re.sub(r'\s*Was\s*\$[\d,]+\.?\d{2}.*?$', '', name)  # Remove "Was $X.XX..."
+            name = re.sub(r'\s*Save\s*\$[\d,]+\.?\d{2}.*?$', '', name)  # Remove "Save $X.XX..."
+            name = re.sub(r'\s*\$[\d,]+\.?\d{2}.*?$', '', name)  # Remove any remaining "$X.XX..." at end
+            name = name.strip()
+            
+            # Extract price - look for $X.XX pattern (unit price, usually the first one)
             price = None
-            price_selectors = [
-                (['span', 'div'], lambda x: x and 'price' in x.lower()),
-                (['span', 'div', 'p'], lambda x: x and ('cost' in x.lower() or 'amount' in x.lower())),
-                (['*'], lambda x: x and '$' in str(x)),
-            ]
+            full_text = product_element.get_text()
             
-            for tags, class_filter in price_selectors:
-                price_elem = product_element.find(tags, class_=class_filter)
-                if price_elem:
-                    price_text = price_elem.get_text(strip=True)
-                    # Check if it contains a price pattern
-                    if re.search(r'[\$]?[\d,]+\.?\d*', price_text):
-                        price = price_text
+            # Find all price patterns in the element
+            price_patterns = re.findall(r'\$[\d,]+\.?\d{2}', full_text)
+            if price_patterns:
+                # Take the first price that looks like a unit price (usually between $0.50 and $2.00)
+                for p in price_patterns:
+                    price_num = float(p.replace('$', '').replace(',', ''))
+                    if 0.30 <= price_num <= 2.00:  # Unit prices are typically in this range
+                        price = p
                         break
-            
-            # Fallback: search entire element text for price pattern
-            if not price:
-                full_text = product_element.get_text()
-                price_match = re.search(r'[\$]?[\d,]+\.?\d*', full_text)
-                if price_match:
-                    price = price_match.group()
+                # If no unit price found, use the first one
+                if not price:
+                    price = price_patterns[0]
+            else:
+                # Try alternative patterns
+                alt_patterns = re.findall(r'[\$]?[\d]+\.[\d]{2}', full_text)
+                if alt_patterns:
+                    price = f"${alt_patterns[0].replace('$', '')}"
             
             if not price:
                 return None
-            
-            # Validate that this is likely an egg product
-            name_lower = name.lower()
-            if 'egg' not in name_lower and len(name) < 10:
-                # Might still be valid, but be more lenient
-                pass
             
             return {
-                "store": store_name,
+                "store": "Woolworths",
                 "item_name": name,
                 "price": price
             }
         
         except Exception as e:
-            logger.debug(f"Error extracting product data: {e}")
+            logger.debug(f"Error extracting Woolworths product data: {e}")
+            return None
+    
+    def extract_paknsave_product(self, product_element: BeautifulSoup) -> Optional[Dict[str, str]]:
+        """
+        Extract product name and price from a Pak'nSave product element.
+        
+        Args:
+            product_element: BeautifulSoup element containing product information
+        
+        Returns:
+            Optional[Dict[str, str]]: Dictionary with store, item_name, and price, or None if invalid
+        """
+        try:
+            # Extract product name - Pak'nSave specific selectors
+            name = None
+            name_elem = (
+                product_element.find(['h2', 'h3', 'h4', 'a'], class_=lambda x: x and ('title' in x.lower() or 'name' in x.lower() or 'heading' in x.lower())) or
+                product_element.find(['a'], href=True) or
+                product_element.find(['h2', 'h3', 'h4'])
+            )
+            
+            if name_elem:
+                name = name_elem.get_text(strip=True)
+            
+            # Clean up name - remove size numbers at the end if they're separate
+            if name:
+                # Remove trailing patterns like " - 6" or "12pk - 7"
+                name = re.sub(r'\s*-\s*\d+\s*$', '', name)
+                name = name.strip()
+            
+            if not name or len(name) < 5:
+                return None
+            
+            # Extract price - Pak'nSave uses specific price classes
+            price = None
+            full_text = product_element.get_text()
+            
+            # Look for price patterns - Pak'nSave usually has $X.XX format
+            price_patterns = re.findall(r'\$[\d,]+\.?\d{2}', full_text)
+            if price_patterns:
+                price = price_patterns[0]
+            else:
+                # Try to find price in specific elements
+                price_elem = (
+                    product_element.find(['span', 'div'], class_=lambda x: x and 'price' in x.lower()) or
+                    product_element.find(['span', 'div'], string=lambda x: x and '$' in str(x))
+                )
+                if price_elem:
+                    price_text = price_elem.get_text(strip=True)
+                    price_match = re.search(r'\$[\d,]+\.?\d{2}', price_text)
+                    if price_match:
+                        price = price_match.group()
+            
+            # If still no price, skip this product (don't want size numbers)
+            if not price or not re.search(r'\$', price):
+                return None
+            
+            return {
+                "store": "Pak'nSave",
+                "item_name": name,
+                "price": price
+            }
+        
+        except Exception as e:
+            logger.debug(f"Error extracting Pak'nSave product data: {e}")
             return None
     
     def crawl_woolworths(self) -> List[Dict[str, str]]:
@@ -185,9 +254,9 @@ class EggCrawler:
                 logger.info("Trying fallback method to find products...")
                 products = soup.find_all(['div', 'article', 'li'], class_=lambda x: x and ('egg' in x.lower() or 'product' in x.lower()))
             
-            for product in products[:20]:  # Limit to first 20 products
-                product_data = self.extract_product_data(product, "Woolworths")
-                if product_data:
+            for product in products[:30]:  # Limit to first 30 products
+                product_data = self.extract_woolworths_product(product)
+                if product_data and 'egg' in product_data['item_name'].lower():
                     results.append(product_data)
                     logger.info(f"Found: {product_data['item_name']} - {product_data['price']}")
             
@@ -256,9 +325,9 @@ class EggCrawler:
                 logger.info("Trying fallback method to find products...")
                 products = soup.find_all(['div', 'article', 'li'], class_=lambda x: x and ('egg' in x.lower() or 'product' in x.lower()))
             
-            for product in products[:20]:  # Limit to first 20 products
-                product_data = self.extract_product_data(product, "Pak'nSave")
-                if product_data:
+            for product in products[:30]:  # Limit to first 30 products
+                product_data = self.extract_paknsave_product(product)
+                if product_data and 'egg' in product_data['item_name'].lower():
                     results.append(product_data)
                     logger.info(f"Found: {product_data['item_name']} - {product_data['price']}")
             
@@ -326,6 +395,51 @@ class EggCrawler:
         return filename
 
 
+def print_results(results: List[Dict[str, str]]):
+    """
+    Print all results in a formatted table to the console.
+    
+    Args:
+        results: List of product dictionaries
+    """
+    if not results:
+        print("\nNo products found.")
+        return
+    
+    print(f"\n{'='*80}")
+    print(f"{'EGG PRICE CRAWL RESULTS':^80}")
+    print(f"{'='*80}")
+    print(f"\nTotal products found: {len(results)}\n")
+    
+    # Group by store
+    woolworths_products = [p for p in results if p['store'] == 'Woolworths']
+    paknsave_products = [p for p in results if p['store'] == "Pak'nSave"]
+    
+    # Print Woolworths products
+    if woolworths_products:
+        print(f"{'─'*80}")
+        print(f"WOOLWORTHS ({len(woolworths_products)} products)")
+        print(f"{'─'*80}")
+        for i, product in enumerate(woolworths_products, 1):
+            name = product['item_name'][:60] + "..." if len(product['item_name']) > 60 else product['item_name']
+            price = product['price']
+            print(f"{i:2d}. {name:<60} {price:>10}")
+        print()
+    
+    # Print Pak'nSave products
+    if paknsave_products:
+        print(f"{'─'*80}")
+        print(f"PAK'NSAVE ({len(paknsave_products)} products)")
+        print(f"{'─'*80}")
+        for i, product in enumerate(paknsave_products, 1):
+            name = product['item_name'][:60] + "..." if len(product['item_name']) > 60 else product['item_name']
+            price = product['price']
+            print(f"{i:2d}. {name:<60} {price:>10}")
+        print()
+    
+    print(f"{'='*80}\n")
+
+
 def main():
     """Main execution function."""
     crawler = EggCrawler()
@@ -337,16 +451,11 @@ def main():
         # Save results to JSON
         output_file = crawler.save_to_json()
         
-        # Print summary
-        print(f"\n{'='*60}")
-        print(f"Crawl Summary")
-        print(f"{'='*60}")
-        print(f"Total products found: {len(results)}")
-        print(f"Results saved to: {output_file}")
-        print(f"\nSample results:")
-        for i, product in enumerate(results[:5], 1):
-            print(f"{i}. {product['item_name']} - {product['price']} ({product['store']})")
-        print(f"{'='*60}\n")
+        # Print all results to console
+        print_results(results)
+        
+        # Print file location
+        print(f"Results saved to: {output_file}\n")
         
     except Exception as e:
         logger.error(f"Fatal error in main execution: {e}")
