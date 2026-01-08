@@ -578,8 +578,8 @@ def main():
         # Crawl all websites
         results = crawler.crawl_all()
         
-        # Save results to JSON
-        output_file = crawler.save_to_json()
+        # Save results to JSON (overwrite same file each time)
+        output_file = crawler.save_to_json("egg_prices.json")
         
         # Upload to Firebase if initialized
         if crawler.firebase_initialized:
