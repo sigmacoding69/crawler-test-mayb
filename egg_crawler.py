@@ -5,6 +5,7 @@ A web crawler to extract egg prices and item names from New Zealand retail store
 
 import json
 import logging
+import os
 import re
 import time
 from typing import List, Dict, Optional
@@ -19,6 +20,8 @@ from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from webdriver_manager.chrome import ChromeDriverManager
+import firebase_admin
+from firebase_admin import credentials, firestore
 
 
 # Configure logging
@@ -32,13 +35,58 @@ logger = logging.getLogger(__name__)
 class EggCrawler:
     """Main crawler class for extracting egg prices from retail websites."""
     
-    def __init__(self):
-        """Initialize the crawler with default settings."""
+    def __init__(self, firebase_service_account_path: Optional[str] = None):
+        """
+        Initialize the crawler with default settings.
+        
+        Args:
+            firebase_service_account_path: Path to Firebase service account JSON key file.
+                                          If None, checks FIREBASE_SERVICE_ACCOUNT environment variable.
+        """
         self.results: List[Dict[str, str]] = []
         self.session = requests.Session()
         self.session.headers.update({
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
         })
+        
+        # Initialize Firebase if service account path is provided
+        self.db = None
+        self.firebase_initialized = False
+        if firebase_service_account_path or os.getenv('FIREBASE_SERVICE_ACCOUNT'):
+            self._init_firebase(firebase_service_account_path)
+    
+    def _init_firebase(self, service_account_path: Optional[str] = None):
+        """
+        Initialize Firebase Admin SDK.
+        
+        Args:
+            service_account_path: Path to service account JSON key file.
+        """
+        try:
+            # Get path from parameter or environment variable
+            if not service_account_path:
+                service_account_path = os.getenv('FIREBASE_SERVICE_ACCOUNT')
+            
+            if not service_account_path or not os.path.exists(service_account_path):
+                logger.warning(f"Firebase service account key not found at: {service_account_path}")
+                logger.warning("Firebase upload will be skipped. Set FIREBASE_SERVICE_ACCOUNT environment variable or pass path to __init__")
+                return
+            
+            # Initialize Firebase only if not already initialized
+            if not firebase_admin._apps:
+                cred = credentials.Certificate(service_account_path)
+                firebase_admin.initialize_app(cred)
+                logger.info("Firebase initialized successfully")
+            
+            # Get Firestore client
+            self.db = firestore.client()
+            self.firebase_initialized = True
+            logger.info("Firestore client ready")
+            
+        except Exception as e:
+            logger.error(f"Error initializing Firebase: {e}")
+            logger.error("Firebase upload will be skipped")
+            self.firebase_initialized = False
     
     def get_selenium_driver(self) -> webdriver.Chrome:
         """
@@ -51,6 +99,8 @@ class EggCrawler:
         chrome_options.add_argument('--headless')
         chrome_options.add_argument('--no-sandbox')
         chrome_options.add_argument('--disable-dev-shm-usage')
+        chrome_options.add_argument('--disable-gpu')
+        chrome_options.add_argument('--window-size=1920,1080')
         chrome_options.add_argument('--disable-blink-features=AutomationControlled')
         chrome_options.add_argument('user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36')
         
@@ -393,6 +443,84 @@ class EggCrawler:
         
         logger.info(f"Results saved to {filename}")
         return filename
+    
+    def upload_to_firebase(self, collection_name: str = "egg_prices") -> int:
+        """
+        Upload crawled results to Firebase Firestore.
+        Updates existing documents or creates new ones based on store + item_name.
+        
+        Args:
+            collection_name: Name of the Firestore collection to store data in.
+        
+        Returns:
+            int: Number of documents successfully uploaded/updated
+        """
+        if not self.firebase_initialized or not self.db:
+            logger.warning("Firebase not initialized. Skipping upload.")
+            return 0
+        
+        if not self.results:
+            logger.warning("No results to upload to Firebase.")
+            return 0
+        
+        try:
+            import hashlib
+            crawl_date = datetime.now()
+            uploaded_count = 0
+            updated_count = 0
+            
+            logger.info(f"Uploading {len(self.results)} products to Firebase collection '{collection_name}'...")
+            
+            # Upload each product as a separate document
+            for product in self.results:
+                try:
+                    store = product.get("store", "")
+                    item_name = product.get("item_name", "")
+                    
+                    # Create a unique document ID from store + item_name
+                    # Using hash to handle special characters and create consistent IDs
+                    doc_id_string = f"{store}_{item_name}".lower().strip()
+                    doc_id = hashlib.md5(doc_id_string.encode('utf-8')).hexdigest()
+                    
+                    # Create document data with egg name, price, store, and crawl date
+                    doc_data = {
+                        "store": store,
+                        "item_name": item_name,
+                        "price": product.get("price", ""),
+                        "last_crawl_date": crawl_date,
+                        "last_crawl_timestamp": firestore.SERVER_TIMESTAMP,
+                        "created_at": firestore.SERVER_TIMESTAMP  # Only set on creation
+                    }
+                    
+                    # Check if document exists
+                    doc_ref = self.db.collection(collection_name).document(doc_id)
+                    doc = doc_ref.get()
+                    
+                    if doc.exists:
+                        # Update existing document (preserve created_at)
+                        existing_data = doc.to_dict()
+                        if "created_at" in existing_data:
+                            doc_data["created_at"] = existing_data["created_at"]
+                        doc_ref.update(doc_data)
+                        updated_count += 1
+                        logger.debug(f"Updated: {item_name} from {store}")
+                    else:
+                        # Create new document
+                        doc_ref.set(doc_data)
+                        uploaded_count += 1
+                        logger.debug(f"Created: {item_name} from {store}")
+                    
+                except Exception as e:
+                    logger.error(f"Error uploading product '{product.get('item_name', 'unknown')}': {e}")
+                    continue
+            
+            total_count = uploaded_count + updated_count
+            logger.info(f"Successfully processed {total_count} products: {uploaded_count} new, {updated_count} updated")
+            return total_count
+            
+        except Exception as e:
+            logger.error(f"Error uploading to Firebase: {e}")
+            return 0
 
 
 def print_results(results: List[Dict[str, str]]):
@@ -442,7 +570,9 @@ def print_results(results: List[Dict[str, str]]):
 
 def main():
     """Main execution function."""
-    crawler = EggCrawler()
+    # Initialize crawler with Firebase (service account path from env var or default)
+    service_account_path = os.getenv('FIREBASE_SERVICE_ACCOUNT', 'serviceAccountKey.json')
+    crawler = EggCrawler(firebase_service_account_path=service_account_path)
     
     try:
         # Crawl all websites
@@ -450,6 +580,14 @@ def main():
         
         # Save results to JSON
         output_file = crawler.save_to_json()
+        
+        # Upload to Firebase if initialized
+        if crawler.firebase_initialized:
+            processed_count = crawler.upload_to_firebase()
+            if processed_count > 0:
+                print(f"✓ Successfully processed {processed_count} products in Firebase\n")
+            else:
+                print("⚠ No products were uploaded to Firebase\n")
         
         # Print all results to console
         print_results(results)

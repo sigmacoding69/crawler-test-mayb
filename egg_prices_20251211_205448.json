@@ -1,0 +1,56 @@
+{
+  "crawl_date": "2025-12-11T20:54:48.707056",
+  "total_products": 10,
+  "products": [
+    {
+      "store": "Woolworths",
+      "item_name": "henergy eggs cage free size 6 Carton 12pack",
+      "price": "$0.66"
+    },
+    {
+      "store": "Woolworths",
+      "item_name": "woodland eggs free range size 6 Carton 10pack",
+      "price": "$0.90"
+    },
+    {
+      "store": "Woolworths",
+      "item_name": "woolworths eggs barn mixed grade Carton 12pack",
+      "price": "$0.71"
+    },
+    {
+      "store": "Woolworths",
+      "item_name": "macro eggs free range mixed grade Carton 12pack",
+      "price": "$0.79"
+    },
+    {
+      "store": "Pak'nSave",
+      "item_name": "Farmer Brown Fresh Colony Size 6 Eggs18pk",
+      "price": "$0.56"
+    },
+    {
+      "store": "Pak'nSave",
+      "item_name": "Rise N Shine Size 7 12 Pack Colony Eggs12pk",
+      "price": "$0.61"
+    },
+    {
+      "store": "Pak'nSave",
+      "item_name": "Farmer Brown Fresh Colony Size 6 Eggs12pk",
+      "price": "$0.42"
+    },
+    {
+      "store": "Pak'nSave",
+      "item_name": "Farmer Brown Fresh Colony Size 7 Eggs18pk",
+      "price": "$0.61"
+    },
+    {
+      "store": "Pak'nSave",
+      "item_name": "Woodland Free Range Size 6 Eggs18pk",
+      "price": "$0.78"
+    },
+    {
+      "store": "Pak'nSave",
+      "item_name": "Farmer Brown Cage-Free Barn Size 7 Eggs12pk",
+      "price": "$0.75"
+    }
+  ]
+}
