@@ -79,8 +79,8 @@ The crawler is configured to run automatically every 24 hours via GitHub Actions
 
 4. **Customize the schedule** (optional):
    - Edit `.github/workflows/daily_crawl.yml`
-   - Change the cron schedule: `cron: '0 2 * * *'` (hour minute day month weekday)
-   - Example: `'0 14 * * *'` = 2:00 PM UTC daily
+   - Change the cron schedule: `cron: '0 2 * * *'` (minute hour day month weekday)
+   - Example: `'0 14 * * *'` = 14:00 UTC daily
 
 ## Output Format
 
