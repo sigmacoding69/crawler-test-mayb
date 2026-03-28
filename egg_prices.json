@@ -1,11 +1,11 @@
 {
-  "crawl_date": "2026-03-27T04:39:05.225118",
-  "total_products": 5,
+  "crawl_date": "2026-03-28T04:26:35.605167",
+  "total_products": 4,
   "products": [
     {
       "store": "Woolworths",
       "item_name": "henergy eggs cage free size 6 Carton 12pack",
-      "price": "$0.63"
+      "price": "$0.72"
     },
     {
       "store": "Woolworths",
@@ -21,11 +21,6 @@
       "store": "Woolworths",
       "item_name": "woodland eggs free range size 7 Carton 10pack",
       "price": "$0.84"
-    },
-    {
-      "store": "Woolworths",
-      "item_name": "woodland eggs free range size 6 Carton 10pack",
-      "price": "$1.00"
     }
   ]
 }
