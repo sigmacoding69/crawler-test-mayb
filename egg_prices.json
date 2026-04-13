@@ -1,5 +1,5 @@
 {
-  "crawl_date": "2026-04-12T04:52:00.984612",
+  "crawl_date": "2026-04-13T05:20:13.326040",
   "total_products": 4,
   "products": [
     {
@@ -14,13 +14,13 @@
     },
     {
       "store": "Woolworths",
-      "item_name": "better eggs s.p.c.a eggs free range mixed grade Carton 12pack",
-      "price": "$0.74"
+      "item_name": "farmer brown eggs cage free barn size 6 Carton 12pack",
+      "price": "$0.63"
     },
     {
       "store": "Woolworths",
-      "item_name": "farmer brown eggs cage free barn size 6 Carton 12pack",
-      "price": "$0.71"
+      "item_name": "woodland eggs free range size 6 Carton 10pack",
+      "price": "$0.74"
     }
   ]
 }
