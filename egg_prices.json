@@ -1,6 +1,6 @@
 {
-  "crawl_date": "2026-04-25T04:40:59.669023",
-  "total_products": 3,
+  "crawl_date": "2026-04-26T05:17:50.793172",
+  "total_products": 4,
   "products": [
     {
       "store": "Woolworths",
@@ -16,6 +16,11 @@
       "store": "Woolworths",
       "item_name": "farmer brown eggs cage free barn size 6 Carton 12pack",
       "price": "$0.79"
+    },
+    {
+      "store": "Woolworths",
+      "item_name": "macro eggs free range mixed grade Carton 12pack",
+      "price": "$0.74"
     }
   ]
 }
