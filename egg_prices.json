@@ -1,12 +1,7 @@
 {
-  "crawl_date": "2026-05-04T05:41:16.501372",
-  "total_products": 4,
+  "crawl_date": "2026-05-05T05:20:18.274255",
+  "total_products": 3,
   "products": [
-    {
-      "store": "Woolworths",
-      "item_name": "woolworths eggs barn mixed grade Carton 12pack",
-      "price": "$0.70"
-    },
     {
       "store": "Woolworths",
       "item_name": "henergy eggs cage free size 6 Carton 12pack",
@@ -14,13 +9,13 @@
     },
     {
       "store": "Woolworths",
-      "item_name": "farmer brown eggs cage free barn size 6 Carton 12pack",
-      "price": "$0.79"
+      "item_name": "woolworths eggs barn mixed grade Carton 12pack",
+      "price": "$0.70"
     },
     {
       "store": "Woolworths",
-      "item_name": "macro eggs free range mixed grade Carton 12pack",
-      "price": "$0.74"
+      "item_name": "farmer brown eggs cage free barn size 6 Carton 12pack",
+      "price": "$0.79"
     }
   ]
 }
