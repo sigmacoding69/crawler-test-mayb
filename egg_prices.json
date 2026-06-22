@@ -1,11 +1,16 @@
 {
-  "crawl_date": "2026-06-21T06:57:53.844666",
-  "total_products": 1,
+  "crawl_date": "2026-06-22T07:33:24.703190",
+  "total_products": 2,
   "products": [
     {
       "store": "Woolworths",
       "item_name": "henergy eggs cage free size 6 Carton 12pack",
-      "price": "$0.66"
+      "price": "$0.83"
+    },
+    {
+      "store": "Woolworths",
+      "item_name": "farmer brown eggs cage free barn size 6 Carton 12pack",
+      "price": "$0.71"
     }
   ]
 }
