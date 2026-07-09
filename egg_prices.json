@@ -1,5 +1,5 @@
 {
-  "crawl_date": "2026-07-08T05:28:22.567026",
+  "crawl_date": "2026-07-09T06:12:47.191083",
   "total_products": 4,
   "products": [
     {
@@ -14,13 +14,13 @@
     },
     {
       "store": "Woolworths",
-      "item_name": "macro eggs free range mixed grade Carton 12pack",
-      "price": "$0.74"
+      "item_name": "better eggs s.p.c.a eggs free range mixed grade Carton 12pack",
+      "price": "$0.73"
     },
     {
       "store": "Woolworths",
-      "item_name": "better eggs s.p.c.a eggs free range mixed grade Carton 12pack",
-      "price": "$0.73"
+      "item_name": "macro eggs free range mixed grade Carton 12pack",
+      "price": "$0.74"
     }
   ]
 }
