@@ -1,11 +1,16 @@
 {
-  "crawl_date": "2026-08-12T04:12:28.869668",
-  "total_products": 1,
+  "crawl_date": "2026-08-13T04:17:54.007188",
+  "total_products": 2,
   "products": [
     {
       "store": "Woolworths",
-      "item_name": "Promoted otaika valley eggs free range mixed grade Carton 10pack",
-      "price": "$0.99"
+      "item_name": "henergy eggs cage free size 6 Carton 12pack",
+      "price": "$0.62"
+    },
+    {
+      "store": "Woolworths",
+      "item_name": "farmer brown eggs cage free barn size 6 Carton 12pack",
+      "price": "$0.83"
     }
   ]
 }
